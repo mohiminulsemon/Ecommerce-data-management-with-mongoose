@@ -27,11 +27,6 @@ const getAllProductsFromDB = async (searchTerm?: string) => {
   return products;
 };
 
-// const getAllProductFromDB = async () => {
-//   const products = await ProductModel.find();
-//   return products;
-// };
-
 const getSingleProductFromDB = async (id: string) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("Invalid ObjectId");
@@ -76,13 +71,7 @@ const deleteProductFromDB = async (id: string) => {
   return deletedProduct;
 };
 
-// const searchProduct = async (searchTerm: string) => {
-//   const regex = new RegExp(searchTerm, "i");
-//   const products = await ProductModel.find({
-//     $or: [{ name: regex }, { description: regex }],
-//   });
-//   return products;
-// };
+
 
 const updateProductInventory = async (productId: string, quantity: number) => {
   if (!mongoose.Types.ObjectId.isValid(productId)) {
@@ -95,7 +84,7 @@ const updateProductInventory = async (productId: string, quantity: number) => {
     throw new Error("Product not found");
   }
 
-  // Update product inventory
+
   product.inventory.quantity -= quantity;
   product.inventory.inStock = product.inventory.quantity > 0;
 
@@ -105,10 +94,8 @@ const updateProductInventory = async (productId: string, quantity: number) => {
 export const ProductServices = {
   createNewProductIntoDB,
   getAllProductsFromDB,
-  // getAllProductFromDB,
   getSingleProductFromDB,
   updateProductInDB,
   deleteProductFromDB,
-  // searchProduct,
   updateProductInventory,
 };

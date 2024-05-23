@@ -37,7 +37,7 @@ const createOrder = async (req: Request, res: Response) => {
     const newOrder = await OrderServices.createOrderIntoDB(orderData);
 
     // Reduce the quantity of the ordered product in the inventory
-    await ProductServices.updateProductInventory(orderData.productId, -orderData.quantity);
+    await ProductServices.updateProductInventory(orderData.productId, orderData.quantity);
 
     res.status(201).json({
       success: true,

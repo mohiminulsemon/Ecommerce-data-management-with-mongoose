@@ -13,7 +13,7 @@ async function main() {
 }
 
 app.listen(config.port, () => {
-    console.log(`app is listening on port ${config.port}`)
+    console.log(`data management system is running on port ${config.port}`)
   })
 
 main()
