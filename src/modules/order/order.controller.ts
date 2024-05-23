@@ -1,11 +1,20 @@
 import { Request, Response } from "express";
 import { OrderServices } from "./order.services";
 import orderValidationSchema from "./order.validation";
-import { ProductServices } from "../product/product.service";
+import { ProductServices } from "../product/product.services";
 
 const createOrder = async (req: Request, res: Response) => {
   try {
-    const orderData = orderValidationSchema.parse(req.body);
+    // Validate order data using Joi
+    const { error, value: orderData } = orderValidationSchema.validate(req.body, { abortEarly: false });
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        details: error.details,
+      });
+    }
 
     // Check the available quantity in inventory
     const { productId, quantity } = orderData;
@@ -24,15 +33,11 @@ const createOrder = async (req: Request, res: Response) => {
       });
     }
 
-    // create the order
-
+    // Create the order
     const newOrder = await OrderServices.createOrderIntoDB(orderData);
 
     // Reduce the quantity of the ordered product in the inventory
-    await ProductServices.updateProductInventory(
-      orderData.productId,
-      orderData.quantity,
-    );
+    await ProductServices.updateProductInventory(orderData.productId, -orderData.quantity);
 
     res.status(201).json({
       success: true,
@@ -40,8 +45,7 @@ const createOrder = async (req: Request, res: Response) => {
       data: newOrder,
     });
   } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal server error";
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
     res.status(500).json({
       success: false,
       message: errorMessage,
@@ -53,33 +57,23 @@ const createOrder = async (req: Request, res: Response) => {
 const getAllOrders = async (req: Request, res: Response) => {
   try {
     const userEmail = req.query.email as string | undefined;
+
     const orders = await OrderServices.getAllOrdersFromDB(userEmail);
 
     if (!orders.length) {
       return res.status(404).json({
         success: false,
-        message: "Order not found",
+        message: "Orders not found",
       });
     }
 
-    if (userEmail) {
-      const orders = await OrderServices.getAllOrdersFromDB(userEmail);
-      res.status(200).json({
-        success: true,
-        message: `Orders fetched successfully for user email!`,
-        data: orders,
-      });
-    } else {
-      const orders = await OrderServices.getAllOrdersFromDB();
-      res.status(200).json({
-        success: true,
-        message: "Orders fetched successfully",
-        data: orders,
-      });
-    }
+    res.status(200).json({
+      success: true,
+      message: userEmail ? `Orders fetched successfully for user email!` : "Orders fetched successfully",
+      data: orders,
+    });
   } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal server error";
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
     res.status(500).json({
       success: false,
       message: errorMessage,

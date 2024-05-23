@@ -1,26 +1,30 @@
 import { Request, Response } from "express";
-import { ProductServices } from "./product.service";
+import { ProductServices } from "./product.services";
 import mongoose from "mongoose";
 import productSchema from "./product.validation";
 
 const createNewProduct = async (req: Request, res: Response) => {
   try {
-    const product = req.body;
-    // const newProduct = await ProductServices.createNewProductIntoDB(product);
+    // Validate product data using Joi
+    const { error, value: productData } = productSchema.validate(req.body, { abortEarly: false });
 
-    const parsedProductByZod = productSchema.parse(product);
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        details: error.details,
+      });
+    }
 
-    const newProduct =
-      await ProductServices.createNewProductIntoDB(parsedProductByZod);
+    const newProduct = await ProductServices.createNewProductIntoDB(productData);
 
-    res.status(200).json({
+    res.status(201).json({
       success: true,
       message: "Product created successfully",
       data: newProduct,
     });
   } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal server error";
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
     res.status(500).json({
       success: false,
       message: errorMessage,
@@ -28,50 +32,6 @@ const createNewProduct = async (req: Request, res: Response) => {
     });
   }
 };
-
-// const getAllProduct = async (req: Request, res: Response) => {
-//   try {
-//     const { searchTerm } = req.query;
-
-//     // const products = await ProductServices.getAllProductFromDB();
-
-//     let products;
-
-//     if (searchTerm) {
-//       products = await ProductServices.searchProduct(searchTerm.toString());
-
-//       if (products.length > 0) {
-//         res.status(200).json({
-//           success: true,
-//           message: `Products matching search term '${searchTerm}' fetched successfully!`,
-//           data: products,
-//         });
-//       } else {
-//         res.status(404).json({
-//           success: false,
-//           message: `No products found matching search term '${searchTerm}'`,
-//         });
-//       }
-//     } else {
-//       // Fetch all products if no searchTerm is provided
-//       products = await ProductServices.getAllProductFromDB();
-
-//       res.status(200).json({
-//         success: true,
-//         message: "Products fetched successfully",
-//         data: products,
-//       });
-//     }
-//   } catch (error: unknown) {
-//     const errorMessage =
-//       error instanceof Error ? error.message : "Internal server error";
-//     res.status(500).json({
-//       success: false,
-//       message: errorMessage,
-//       error: error,
-//     });
-//   }
-// };
 
 const getAllProduct = async (req: Request, res: Response) => {
   try {
@@ -98,8 +58,7 @@ const getAllProduct = async (req: Request, res: Response) => {
       });
     }
   } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal server error";
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
     res.status(500).json({
       success: false,
       message: errorMessage,
@@ -110,9 +69,6 @@ const getAllProduct = async (req: Request, res: Response) => {
 
 const getSingleProduct = async (req: Request, res: Response) => {
   try {
-    // const { productId } = req.params;
-    // const product = await ProductServices.getSingleProductFromDB(productId);
-
     let { productId } = req.params;
     // Remove leading colon if present
     if (productId.startsWith(":")) {
@@ -128,51 +84,58 @@ const getSingleProduct = async (req: Request, res: Response) => {
 
     const product = await ProductServices.getSingleProductFromDB(productId);
 
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: "Product fetched successfully",
       data: product,
     });
   } catch (error: unknown) {
-    if (error instanceof Error) {
-      if (error.message === "Product not found") {
-        return res.status(404).json({
-          success: false,
-          message: "Product not found",
-        });
-      }
-
-      res.status(500).json({
-        success: false,
-        message: error.message || "Internal server error",
-        error: error,
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: "Internal server error",
-        error: error,
-      });
-    }
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
+    res.status(500).json({
+      success: false,
+      message: errorMessage,
+      error: error,
+    });
   }
 };
 
 const updateProduct = async (req: Request, res: Response) => {
   try {
-    // const { productId } = req.params;
     let { productId } = req.params;
     // Remove leading colon if present
     if (productId.startsWith(":")) {
       productId = productId.substring(1);
     }
 
-    const parsedUpdatedProductByZod = productSchema.parse(req.body);
+    // Validate updated product data using Joi
+    const { error, value: updatedProductData } = productSchema.validate(req.body, { abortEarly: false });
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        details: error.details,
+      });
+    }
 
     const updatedProduct = await ProductServices.updateProductInDB(
       productId,
-      // req.body,
-      parsedUpdatedProductByZod,
+      updatedProductData,
     );
+
+    if (!updatedProduct) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -180,8 +143,7 @@ const updateProduct = async (req: Request, res: Response) => {
       data: updatedProduct,
     });
   } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal server error";
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
     res.status(500).json({
       success: false,
       message: errorMessage,
@@ -217,12 +179,10 @@ const deleteProduct = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Product deleted successfully",
-      // data: deletedProduct
       data: null,
     });
   } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal server error";
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
     res.status(500).json({
       success: false,
       message: errorMessage,
