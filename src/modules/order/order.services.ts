@@ -1,4 +1,4 @@
-import { OrderModel } from "../order.model";
+import { OrderModel } from "../orders.model";
 import { TOrder } from "./order.interface";
 
 const createOrderIntoDB = async (order: TOrder) => {

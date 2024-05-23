@@ -1,23 +1,23 @@
-import { z } from "zod";
+import Joi from "joi";
 
-export const productVariantSchema = z.object({
-  type: z.string(),
-  value: z.string(),
+export const productVariantSchema = Joi.object({
+  type: Joi.string().required(),
+  value: Joi.string().required(),
 });
 
-export const productInventorySchema = z.object({
-  quantity: z.number().int().positive(),
-  inStock: z.boolean(),
+export const productInventorySchema = Joi.object({
+  quantity: Joi.number().integer().positive().required(),
+  inStock: Joi.boolean().required(),
 });
 
-export const productSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().min(1),
-  price: z.number().int().positive(),
-  category: z.string().min(1),
-  tags: z.array(z.string()),
-  variants: z.array(productVariantSchema),
-  inventory: productInventorySchema,
+export const productSchema = Joi.object({
+  name: Joi.string().min(1).required(),
+  description: Joi.string().min(1).required(),
+  price: Joi.number().integer().positive().required(),
+  category: Joi.string().min(1).required(),
+  tags: Joi.array().items(Joi.string()),
+  variants: Joi.array().items(productVariantSchema),
+  inventory: productInventorySchema.required(),
 });
 
 export default productSchema;

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { ProductModel } from "../product.model";
+import { ProductModel } from "../products.model";
 import { TProduct } from "./product.interface";
 
 const createNewProductIntoDB = async (product: TProduct) => {

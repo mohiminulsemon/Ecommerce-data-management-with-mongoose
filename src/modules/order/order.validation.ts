@@ -1,10 +1,10 @@
-import { z } from "zod";
+import Joi from "joi";
 
-export const orderValidationSchema = z.object({
-  email: z.string().email(),
-  productId: z.string(),
-  price: z.number().positive(),
-  quantity: z.number().int().positive(),
+export const orderValidationSchema = Joi.object({
+  email: Joi.string().email().required(),
+  productId: Joi.string().required(),
+  price: Joi.number().positive().required(),
+  quantity: Joi.number().integer().positive().required(),
 });
 
 export default orderValidationSchema;
